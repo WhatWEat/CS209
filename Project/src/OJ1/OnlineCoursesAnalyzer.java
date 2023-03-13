@@ -56,18 +56,57 @@ public class OnlineCoursesAnalyzer {
     public Map<String, Integer> getPtcpCountByInstAndSubject() {
         return courses.stream().collect(Collectors.groupingBy(i-> format("%s-%s",i.institution.toString(),i.subject.toString()),Collectors.summingInt(i->i.participants)))
             .entrySet().stream().sorted((e1,e2)-> {if(e2.getValue().compareTo(e1.getValue())>0) return 1;
-                else if(e2.getValue().equals(e1.getValue())) return e2.getKey().compareTo(e1.getKey());
-                else return -1;}
-            ).collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue,(e1, e2) -> e1, LinkedHashMap::new));
+                                                    else if(e2.getValue().equals(e1.getValue())) return e2.getKey().compareTo(e1.getKey());
+                                                    else return -1;})
+            .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue,(e1, e2) -> e1, LinkedHashMap::new));
     }
     //3
     public Map<String, List<List<String>>> getCourseListOfInstructor() {
-        return null;
+        Map<String, List<List<String>>> instruct = new TreeMap<>(String::compareTo);
+        courses.stream().sorted(Comparator.comparing(c -> c.title)).forEach(e->{
+            String[] insList = e.instructors.split(", ",0);
+            Arrays.stream(insList).forEach(ins ->{
+                if(!instruct.containsKey(ins)){
+                    ArrayList<List<String>> tmp = new ArrayList<>();
+                    tmp.add(new ArrayList<>());
+                    tmp.add(new ArrayList<>());
+                    instruct.put(ins,tmp);
+                }
+                List<List<String>> courseList = instruct.get(ins);
+                if(insList.length == 1){
+                    if(!courseList.get(0).contains(e.title)){
+                        courseList.get(0).add(e.title);
+                    }
+                } else {
+                    if(!courseList.get(1).contains(e.title)){
+                        courseList.get(1).add(e.title);
+                    }
+                }
+                instruct.replace(ins,courseList);
+            });
+        });
+        return instruct;
     }
 
     //4
     public List<String> getCourses(int topK, String by) {
-        return null;
+        Comparator<Course> cmp = null;
+
+        if(by.equals("hours")){
+            cmp = ((c1, c2) -> {
+                if(c1.totalHours < c2.totalHours) return 1;
+                else if(c1.totalHours == c2.totalHours) return c2.title.compareTo(c1.title);
+                else return -1;
+            });
+        } else {
+            cmp = ((c1, c2) -> {
+                if(c1.participants < c2.participants) return 1;
+                else if(c1.participants == c2.participants) return c2.title.compareTo(c1.title);
+                else return -1;
+            });
+        }
+
+        return courses.stream().sorted(cmp).map(e->e.title).distinct().collect(Collectors.toList()).subList(0,topK);
     }
 
     //5
