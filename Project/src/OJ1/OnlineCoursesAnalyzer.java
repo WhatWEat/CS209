@@ -142,7 +142,9 @@ public class OnlineCoursesAnalyzer {
                 double degree1 = e1.getValue().get(2), degree2 = e2.getValue().get(2);
                 double s1 = Math.pow((age - age1),2) + Math.pow((gender * 100 - male1),2) + Math.pow((isBachelorOrHigher * 100 - degree1),2),
                         s2 = Math.pow((age - age2),2) + Math.pow((gender * 100 - male2),2) + Math.pow((isBachelorOrHigher * 100 - degree2),2);
-                return Double.compare(s1, s2);
+                if(s1 > s2) return 1;
+                else if(s1 == s2) return e2.getKey().compareTo(e1.getKey());
+                else return -1;
             }).map(i->i.getKey().toString()).distinct().toList()
             .forEach(i->{
                 courseList.add(courseName.get(i));
